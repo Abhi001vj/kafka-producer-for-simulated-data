@@ -33,7 +33,11 @@ security_protocol = 'SASL_SSL'
 # context = ssl.create_default_context()
 # context.options &= ssl.OP_NO_TLSv1
 # context.options &= ssl.OP_NO_TLSv1_1
-
+def get_offset_s(store_num):
+    offset = 0
+    if store_num != 0:
+        offset = randint(-60, 60)
+    return offset
 def load_records(store_num):
 
     runon = [] # store the dates yyyymmdd that the load has already run
