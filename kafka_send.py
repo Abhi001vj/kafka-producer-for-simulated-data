@@ -64,8 +64,8 @@ def load_records(store_num):
         with gzip.open('OnlineRetail.json.gz', 'rt') as tx_f:
 
             lines_processed = 0
-            write_lines_processed(lines_processed)
-            write_tps(0)
+#             write_lines_processed(lines_processed)
+#             write_tps(0)
 
             start_time = datetime.datetime.today().timestamp()
 
