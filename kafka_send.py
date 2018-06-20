@@ -30,23 +30,25 @@ sasl_mechanism = 'PLAIN'
 security_protocol = 'SASL_SSL'
 
 # Create a new context using system defaults, disable all but TLS1.2
-context = ssl.create_default_context()
-context.options &= ssl.OP_NO_TLSv1
-context.options &= ssl.OP_NO_TLSv1_1
+# context = ssl.create_default_context()
+# context.options &= ssl.OP_NO_TLSv1
+# context.options &= ssl.OP_NO_TLSv1_1
 
-def get_producer(opts):
-    producer = KafkaProducer(bootstrap_servers = opts['brokers'],
-                         sasl_plain_username = opts['username'],
-                         sasl_plain_password = opts['password'],
-                         security_protocol = security_protocol,
-                         ssl_context = context,
-                         sasl_mechanism = sasl_mechanism,
-                         api_version = (0,10),
-                         retries = 5,
-                         key_serializer=str.encode,
-                         #value_serializer=lambda v: json.dumps(v).encode('utf-8')
-                         )
+def get_producer():
+    # producer = KafkaProducer(bootstrap_servers = 'ec2-34-214-236-207.us-west-2.compute.amazonaws.com:9092',
+    #                      # sasl_plain_username = opts['username'],
+    #                      # sasl_plain_password = opts['password'],
+    #                      # security_protocol = security_protocol,
+    #                      # ssl_context = context,
+    #                      # sasl_mechanism = sasl_mechanism,
+    #                      api_version = (0,10),
+    #                      retries = 5,
+    #                      key_serializer=str.encode,
+    #                      value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    #                      )
+    producer = KafkaProducer(bootstrap_servers=['ec2-34-214-236-207.us-west-2.compute.amazonaws.com:9092'],api_version=(0,10))
     return producer
+
 
 def get_offset_s(store_num):
     offset = 0
@@ -57,15 +59,15 @@ def get_offset_s(store_num):
 def write_lines_processed(lines_processed):
     print(str(lines_processed), end=" ", flush=True)
     # TODO write stats to a kafka topic
-    #with open('processed.log', 'w') as log_f:
-    #    log_f.write(str(lines_processed))
+    with open('processed.log', 'w') as log_f:
+       log_f.write(str(lines_processed))
 
 def write_tps(tps):
-    #print(str(tps))
-    pass
+    print(str(tps))
+    # pass
     # TODO write stats to a kafka topic
-    #with open('tps.log', 'w') as log_f:
-    #    log_f.write(str(tps))
+    with open('tps.log', 'w') as log_f:
+       log_f.write(str(tps))
 
 def kafka_send_callback(args):
     if type(args) is RecordMetadata:
@@ -78,28 +80,28 @@ def kafka_send_callback(args):
     else:
         print(args)
 
-def load_records(store_num, opts):
+def load_records(store_num):
 
     runon = [] # store the dates yyyymmdd that the load has already run
 
     # this loop will cause the load to run once every day
     while True:
 
-        # if we've already run today, keep skipping until tomorrow
+        # # if we've already run today, keep skipping until tomorrow
         rundate = datetime.datetime.now()
         rundate_yyyymmdd = rundate.strftime("%Y%m%d")
-        if rundate_yyyymmdd in runon:
-            print('runon{} contains {} - waiting until tomorrow before processing again.'.format(runon, rundate_yyyymmdd))
-            time.sleep(600) # sleep 10 minutes
-            # skip loading the data - let's try again
-            continue
-        else:
-            print("runon{} doesn't contains {} - processing file.".format(runon, rundate_yyyymmdd))
+        # if rundate_yyyymmdd in runon:
+        #     print('runon{} contains {} - waiting until tomorrow before processing again.'.format(runon, rundate_yyyymmdd))
+        #     time.sleep(600) # sleep 10 minutes
+        #     # skip loading the data - let's try again
+        #     continue
+        # else:
+        #     print("runon{} doesn't contains {} - processing file.".format(runon, rundate_yyyymmdd))
 
         print('Starting new loop')
 
         # start with a fresh producer
-        producer = get_producer(opts)
+        producer = KafkaProducer(bootstrap_servers=['ec2-34-214-236-207.us-west-2.compute.amazonaws.com:9092'],api_version=(0,10))
 
         with gzip.open('OnlineRetail.json.gz', 'rt') as tx_f:
 
@@ -124,7 +126,7 @@ def load_records(store_num, opts):
 
                 tx_time = tx_dt.strftime('%H:%M:%S')
                 j['InvoiceTime'] = tx_time
-                j['InvoiceDate'] = int(tx_dt.strftime('%s')) * 1000
+                j['InvoiceDate'] = int(tx_dt.strftime('%S')) * 1000
 
                 j['StoreID'] = int(store_num)
 
@@ -134,36 +136,24 @@ def load_records(store_num, opts):
                 if lines_processed == 0:
                     print('Processing first record', json.dumps(j))
 
-                approx_wait_cycles = 0
-                while datetime.datetime.now() < tx_dt:
-                    # it isn't time to send our transaction yet
-                    time.sleep(0.25) # yield CPU
-                    approx_wait_cycles += 1
-                    if approx_wait_cycles > 1000:
-                        print("Waited a few cycles to process {} {}".format(j['TransactionID'], j['InvoiceDate']), flush=True)
-                        approx_wait_cycles = 0 # reset the counter so we only ouput every X cycles
-
-                # todo call back for printing error
-                producer.send(opts['topic-transactions'], key=j['TransactionID'], value=json.dumps(j).encode('utf-8')).add_both(kafka_send_callback)
+                producer.send("retail_demo",json.dumps(j).encode('utf-8'))
                 lines_processed += 1
 
                 # print status every 10000 records processed
                 if lines_processed < 10 or lines_processed % 10000 == 0:
-                    write_lines_processed(lines_processed)
+        #             write_lines_processed(lines_processed)
+                      print("{} lines processed".format(lines_processed))
 
-                if lines_processed % 1000 == 0:
-                    time_diff = datetime.datetime.today().timestamp() - start_time
-                    write_tps(1000 / time_diff)
-                    start_time = datetime.datetime.today().timestamp()
+        #         if lines_processed % 1000 == 0:
+        #             time_diff = datetime.datetime.today().timestamp() - start_time
+        #             write_tps(1000 / time_diff)
+        #             start_time = datetime.datetime.today().timestamp()
 
             producer.flush()
             producer.close()
             print('Finished processing records. Flushed and Closed producer ...')
 
-            runon.append(rundate_yyyymmdd)
-            print('Added {} to runon{}'.format(rundate_yyyymmdd, runon))
-
 if __name__ == "__main__":
 
-    store_num = os.getenv('CF_INSTANCE_INDEX')
+    store_num = 45
     load_records(store_num)
