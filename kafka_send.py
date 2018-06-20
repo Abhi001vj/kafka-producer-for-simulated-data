@@ -34,52 +34,6 @@ security_protocol = 'SASL_SSL'
 # context.options &= ssl.OP_NO_TLSv1
 # context.options &= ssl.OP_NO_TLSv1_1
 
-def get_producer():
-    # producer = KafkaProducer(bootstrap_servers = 'ec2-34-214-236-207.us-west-2.compute.amazonaws.com:9092',
-    #                      # sasl_plain_username = opts['username'],
-    #                      # sasl_plain_password = opts['password'],
-    #                      # security_protocol = security_protocol,
-    #                      # ssl_context = context,
-    #                      # sasl_mechanism = sasl_mechanism,
-    #                      api_version = (0,10),
-    #                      retries = 5,
-    #                      key_serializer=str.encode,
-    #                      value_serializer=lambda v: json.dumps(v).encode('utf-8')
-    #                      )
-    producer = KafkaProducer(bootstrap_servers=['ec2-34-214-236-207.us-west-2.compute.amazonaws.com:9092'],api_version=(0,10))
-    return producer
-
-
-def get_offset_s(store_num):
-    offset = 0
-    if store_num != 0:
-        offset = randint(-60, 60)
-    return offset
-
-def write_lines_processed(lines_processed):
-    print(str(lines_processed), end=" ", flush=True)
-    # TODO write stats to a kafka topic
-    with open('processed.log', 'w') as log_f:
-       log_f.write(str(lines_processed))
-
-def write_tps(tps):
-    print(str(tps))
-    # pass
-    # TODO write stats to a kafka topic
-    with open('tps.log', 'w') as log_f:
-       log_f.write(str(tps))
-
-def kafka_send_callback(args):
-    if type(args) is RecordMetadata:
-        pass
-        # Ignore success as there will be so many - instead we should track failures?
-        # print('.', end="")
-    elif type(args) is KafkaTimeoutError:
-        print('!', end="")
-        # KafkaTimeoutError: ('Batch containing %s record(s) expired due to timeout while requesting metadata from brokers for %s', 49, TopicPartition(topic='transactions_load', partition=2))
-    else:
-        print(args)
-
 def load_records(store_num):
 
     runon = [] # store the dates yyyymmdd that the load has already run
