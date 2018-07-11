@@ -59,9 +59,9 @@ def load_records(store_num):
         print('Starting new loop')
 
         # start with a fresh producer
-        producer = KafkaProducer(bootstrap_servers=['ec2-34-214-236-207.us-west-2.compute.amazonaws.com:9092'],api_version=(0,10))
+        producer = KafkaProducer(bootstrap_servers=['ip-172-31-16-101.us-west-2.compute.internal:9092'],api_version=(0,10))
 
-        with gzip.open('OnlineRetail.json.gz', 'rt') as tx_f:
+        with gzip.open('/home/ec2-user/kafka-producer-for-simulated-data/OnlineRetail.json.gz', 'rt') as tx_f:
 
             lines_processed = 0
 #             write_lines_processed(lines_processed)
