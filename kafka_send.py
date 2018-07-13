@@ -10,6 +10,7 @@ import json
 import time
 import os
 import gzip
+import random
 
 from random import randint
 
@@ -39,7 +40,7 @@ def get_offset_s(store_num):
         offset = randint(-60, 60)
     return offset
 def load_records(store_num):
-
+    brands = ['clothes','stationary','vegetables','fruits','electronics','bevarages']
     runon = [] # store the dates yyyymmdd that the load has already run
 
     # this loop will cause the load to run once every day
@@ -77,16 +78,22 @@ def load_records(store_num):
 
                 # load the record - use an OrderedDict to keep the fields in order
                 j = json.loads(line, object_pairs_hook=OrderedDict)
-                tx_dt = datetime.datetime.fromtimestamp(int(j['InvoiceDate'])/1000)
-                tx_dt = tx_dt.replace(year=rundate.year, month=rundate.month, day=rundate.day)
+                # tx_dt = datetime.datetime.fromtimestamp(int(j['InvoiceDate'])/1000)
+                tx_td = datetime.now()
+                
+                # tx_dt = tx_dt.replace(year=rundate.year, month=rundate.month, day=rundate.day)
                 # add some randomness to the invoicedate
-                tx_dt = tx_dt + datetime.timedelta(seconds=get_offset_s(store_num))
+                # tx_dt = tx_dt + datetime.timedelta(seconds=get_offset_s(store_num))
 
-                tx_time = tx_dt.strftime('%H:%M:%S')
-                j['InvoiceTime'] = tx_time
-                j['InvoiceDate'] = int(tx_dt.strftime('%S')) * 1000
-
+                # tx_time = tx_dt.strftime('%H:%M:%S')
+                # j['InvoiceTime'] = tx_time
+                j['InvoiceTime'] = tx_td.strftime('%Y-%m-%d %H:%M:%S')
+                # j['InvoiceDate'] = int(tx_dt.strftime('%S')) * 1000
+                j['InvoiceDate'] = tx_td.strftime('%Y-%m-%d')
                 j['StoreID'] = int(store_num)
+                j['Description'] = random.choice(brands)
+
+#                 j['StoreID'] = int(store_num)
 
                 # TODO - use 3 digits for store, 4 for line num
                 j['TransactionID'] = str(j['InvoiceNo']) + str(j['LineNo']) + str(store_num) + tx_dt.strftime('%y%m%d')
