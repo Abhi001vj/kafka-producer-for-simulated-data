@@ -79,7 +79,7 @@ def load_records(store_num):
                 # load the record - use an OrderedDict to keep the fields in order
                 j = json.loads(line, object_pairs_hook=OrderedDict)
                 # tx_dt = datetime.datetime.fromtimestamp(int(j['InvoiceDate'])/1000)
-                tx_td = datetime.now()
+                tx_td = datetime.datetime.now()
                 
                 # tx_dt = tx_dt.replace(year=rundate.year, month=rundate.month, day=rundate.day)
                 # add some randomness to the invoicedate
@@ -96,7 +96,7 @@ def load_records(store_num):
 #                 j['StoreID'] = int(store_num)
 
                 # TODO - use 3 digits for store, 4 for line num
-                j['TransactionID'] = str(j['InvoiceNo']) + str(j['LineNo']) + str(store_num) + tx_dt.strftime('%y%m%d')
+                j['TransactionID'] = str(j['InvoiceNo']) + str(store_num) + tx_td.strftime('%y%m%d')
 
                 if lines_processed == 0:
                     print('Processing first record', json.dumps(j))
